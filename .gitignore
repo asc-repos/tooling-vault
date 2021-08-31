@@ -1,0 +1,5 @@
+src/vault-tool/data
+src/vault-tool/policies
+
+tokens.json
+*.text
