@@ -28,6 +28,10 @@ set -xeu
 
 declare -r dir_this="$( dirname "${0}" )"
 
+if [ "${UID}" == "0" ] ; then
+    echo "ERROR:$( basename "${0}" ):${LINENO}: Vault magic vars export not implemented for super user. Launch as regular user please. Bailing out." >&2
+    exit 1
+fi
 for file_exe in vault jq docker docker-compose ; do
     which "${file_exe}"
 done
