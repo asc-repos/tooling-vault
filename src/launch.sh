@@ -34,23 +34,32 @@ done
 
 cd "${dir_this}"  # Compose file is using relative path and this 'cd' is critical for 'docker-compose'.
 
-sudo docker-compose \
-    --file "${dir_this}/docker-compose.yaml" \
-    --project-name vault-poc \
-    up \
-    --detach
 trap "sudo docker-compose \
             --file ${dir_this}/docker-compose.yaml \
             --project-name vault-poc \
             down \
         ; sudo docker rm --force vault-poc_vault_1" \
             EXIT KILL QUIT STOP TERM ABRT INT
-#sudo docker-compose logs -f vault
+
+sudo docker-compose \
+    --file "${dir_this}/docker-compose.yaml" \
+    --project-name vault-poc \
+    up \
+    --detach
 set +x
+echo -n "INFO:$( basename "${0}" ):${LINENO}: Warming up. " >&2
+while ! vault status 2>/dev/null | egrep "Sealed[[:space:]]{1,}(true|false)" ; do
+    sleep 1
+    echo -n "." >&2
+done
+bash "${dir_this}/init.sh"
+bash "${dir_this}/unseal.sh"
+echo >&2
 echo "░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░" >&2
 echo "INFO:$( basename "${0}" ):${LINENO}: Init how to:" >&2
 echo "bash '${dir_this}/init.sh'" >&2
 echo "bash '${dir_this}/unseal.sh'" >&2
+echo "INFO:$( basename "${0}" ):${LINENO}: Service is at IP addr. $( sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' vault-poc_vault_1 )" >&2
 echo "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" >&2
 set -x
 sudo docker logs -f vault-poc_vault_1
